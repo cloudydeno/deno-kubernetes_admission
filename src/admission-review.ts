@@ -1,8 +1,9 @@
-import * as c from "https://deno.land/x/kubernetes_apis@v0.3.2/common.ts";
-import * as MetaV1 from "https://deno.land/x/kubernetes_apis@v0.3.2/builtin/meta@v1/structs.ts";
-import * as AuthnV1 from "https://deno.land/x/kubernetes_apis@v0.3.2/builtin/authentication.k8s.io@v1/mod.ts";
-
-import * as Base64 from "https://deno.land/std@0.125.0/encoding/base64.ts";
+import {
+  Base64,
+  c,
+  Status, fromStatus, toStatus,
+  UserInfo, fromUserInfo, toUserInfo,
+} from "./deps.ts";
 
 // https://github.com/kubernetes/api/blob/master/admission/v1beta1/types.go
 // This file looks like a normal /x/kubernetes_apis file, but it's actually handwritten
@@ -43,7 +44,7 @@ export interface AdmissionRequest {
   name?: string | null;
   namespace?: string | null;
   operation: "CREATE" | "UPDATE" | "DELETE" | "CONNECT" | c.UnexpectedEnumValue;
-  userInfo: AuthnV1.UserInfo;
+  userInfo: UserInfo;
   object: c.JSONValue;
   oldObject: c.JSONValue;
   dryRun?: boolean | null;
@@ -62,7 +63,7 @@ export function toAdmissionRequest(input: c.JSONValue): AdmissionRequest {
     name: c.readOpt(obj["name"], c.checkStr),
     namespace: c.readOpt(obj["namespace"], c.checkStr),
     operation: c.readEnum(obj["operation"]),
-    userInfo: AuthnV1.toUserInfo(c.checkObj(obj["userInfo"])),
+    userInfo: toUserInfo(c.checkObj(obj["userInfo"])),
     object: obj["object"],
     oldObject: obj["oldObject"],
     dryRun: c.readOpt(obj["dryRun"], c.checkBool),
@@ -75,7 +76,7 @@ export function fromAdmissionRequest(input: AdmissionRequest): c.JSONValue {
     resource: {...input.resource},
     requestKind: input.requestKind != null ? {...input.requestKind} : undefined,
     requestResource: input.requestResource != null ? {...input.requestResource} : undefined,
-    userInfo: AuthnV1.fromUserInfo(input.userInfo),
+    userInfo: fromUserInfo(input.userInfo),
     options: input.options as c.JSONValue,
   }}
 
@@ -83,7 +84,7 @@ export function fromAdmissionRequest(input: AdmissionRequest): c.JSONValue {
 export interface AdmissionResponse {
   uid: string;
   allowed: boolean;
-  result?: MetaV1.Status | null;
+  result?: Status | null;
   patch?: Uint8Array | null; // base64 encoded
   patchType?: 'JSONPatch' | c.UnexpectedEnumValue | null;
   auditAnnotations?: Record<string, string> | null;
@@ -94,7 +95,7 @@ export function toAdmissionResponse(input: c.JSONValue): AdmissionResponse {
   return {
     uid: c.checkStr(obj["uid"]),
     allowed: c.checkBool(obj["allowed"]),
-    result: c.readOpt(obj["status"], MetaV1.toStatus),
+    result: c.readOpt(obj["status"], toStatus),
     patch: c.readOpt(obj["patch"], x => Base64.decode(c.checkStr(x))),
     patchType: c.readOpt(obj["patchType"], x => c.readEnum<c.UnexpectedEnumValue>(x)),
     auditAnnotations: c.readOpt(obj["auditAnnotations"], x => c.readMap(x, c.checkStr)),
@@ -103,7 +104,7 @@ export function toAdmissionResponse(input: c.JSONValue): AdmissionResponse {
 export function fromAdmissionResponse(input: AdmissionResponse): c.JSONValue {
   return {
     ...input,
-    result: input.result != null ? MetaV1.fromStatus(input.result) : undefined,
+    result: input.result != null ? fromStatus(input.result) : undefined,
     patch: input.patch != null ? Base64.encode(input.patch) : undefined,
   }}
 

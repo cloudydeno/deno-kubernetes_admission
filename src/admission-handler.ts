@@ -1,9 +1,8 @@
-import { serve, serveTls } from "https://deno.land/std@0.125.0/http/server.ts";
-
 import {
   fromMutatingWebhookConfiguration,
   fromValidatingWebhookConfiguration,
-} from "https://deno.land/x/kubernetes_apis@v0.3.2/builtin/admissionregistration.k8s.io@v1/structs.ts";
+} from "./deps.ts";
+
 import {
   fromAdmissionReview, toAdmissionReview,
 } from "./admission-review.ts";
@@ -11,7 +10,6 @@ import {
   WebhookRule,
   AdmissionContext,
 } from "./admission-context.ts";
-export { AdmissionContext };
 
 export interface DefaultWebhookConfig {
   failurePolicy: 'Ignore' | 'Fail';
@@ -27,7 +25,7 @@ const defaultWebhookConfigDefaults: DefaultWebhookConfig = {
   reinvocationPolicy: 'IfNeeded',
 };
 
-export class AdmissionServer {
+export class AdmissionHandler {
   constructor(
     public metadata: {
       name: string;
@@ -49,23 +47,6 @@ export class AdmissionServer {
   withDefaultWebhookConfig(config: Partial<DefaultWebhookConfig>) {
     this.defaultWebhookConfig = config;
     return this;
-  }
-
-  async servePlaintext(port = 8000) {
-    console.log(`Available @ http://localhost:${port}/`);
-    await serve(async req => {
-      const resp = await this.handleRequest(req);
-      resp.headers.set("server", `kubernetes-aws-identity-webhook/0.1.0`);
-      return resp;
-    }, {
-      port,
-      hostname: '[::]',
-      onError(err: any) {
-        const msg = err.stack || err.message || JSON.stringify(err);
-        console.error('!!!', msg);
-        return new Response(`Internal Error!\n${msg}`, {status: 500});
-      },
-    });
   }
 
   async handleRequest(request: Request) {

@@ -1,6 +1,7 @@
 import type {
   JsonPatchOp,
-} from "https://deno.land/x/kubernetes_apis@v0.3.2/common.ts";
+} from "./deps.ts";
+
 import type {
   AdmissionRequest, AdmissionResponse,
 } from "./admission-review.ts";
