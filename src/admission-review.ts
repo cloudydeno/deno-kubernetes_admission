@@ -1,8 +1,8 @@
-import * as c from "https://deno.land/x/kubernetes_apis@v0.3.1/common.ts";
-import * as MetaV1 from "https://deno.land/x/kubernetes_apis@v0.3.1/builtin/meta@v1/structs.ts";
-import * as AuthnV1 from "https://deno.land/x/kubernetes_apis@v0.3.1/builtin/authentication.k8s.io@v1/mod.ts";
+import * as c from "https://deno.land/x/kubernetes_apis@v0.3.2/common.ts";
+import * as MetaV1 from "https://deno.land/x/kubernetes_apis@v0.3.2/builtin/meta@v1/structs.ts";
+import * as AuthnV1 from "https://deno.land/x/kubernetes_apis@v0.3.2/builtin/authentication.k8s.io@v1/mod.ts";
 
-import * as Base64 from "https://deno.land/std@0.95.0/encoding/base64.ts";
+import * as Base64 from "https://deno.land/std@0.125.0/encoding/base64.ts";
 
 // https://github.com/kubernetes/api/blob/master/admission/v1beta1/types.go
 // This file looks like a normal /x/kubernetes_apis file, but it's actually handwritten

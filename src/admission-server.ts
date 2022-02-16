@@ -1,7 +1,7 @@
 import {
   fromMutatingWebhookConfiguration,
   fromValidatingWebhookConfiguration,
-} from "https://deno.land/x/kubernetes_apis@v0.3.1/builtin/admissionregistration.k8s.io@v1/structs.ts";
+} from "https://deno.land/x/kubernetes_apis@v0.3.2/builtin/admissionregistration.k8s.io@v1/structs.ts";
 import {
   fromAdmissionReview, toAdmissionReview,
 } from "./admission-review.ts";
