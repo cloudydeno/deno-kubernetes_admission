@@ -1,0 +1,18 @@
+localFileRoot: ../..
+
+entrypoint:
+  specifier: mod.ts
+
+dependencyLayers:
+- specifier: ../../src/deps.ts
+- specifier: ../../src/mod.ts
+- specifier: https://deno.land/x/kubernetes_apis@v0.3.2/builtin/core@v1/structs.ts
+
+runtimeFlags:
+- --allow-net
+- --allow-read=/run
+- --allow-env=WEBHOOK_TLS_DIRECTORY
+
+ejections:
+  alpine:
+    base: denoland/deno:alpine-1.18.2

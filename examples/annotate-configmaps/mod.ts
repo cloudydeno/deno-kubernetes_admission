@@ -4,6 +4,8 @@ import * as CoreV1 from "https://deno.land/x/kubernetes_apis@v0.3.2/builtin/core
 new AdmissionServer({
   name: 'annotate-configmaps',
   repo: 'https://github.com/cloudydeno/deno-kubernetes_admission',
+}).withDefaultWebhookConfig({
+  failurePolicy: 'Ignore',
 }).withMutatingRule({
   operations: ['CREATE', 'UPDATE'],
   apiGroups: [''],
@@ -20,6 +22,14 @@ new AdmissionServer({
       return;
     }
 
+    if (!configMap.metadata?.annotations) {
+      ctx.addPatch({
+        op: 'add',
+        path: `/metadata/annotations`,
+        value: {},
+      });
+    }
+
     ctx.log(`Adding annotation :)`);
     ctx.addPatch({
       op: 'add',
@@ -27,4 +37,4 @@ new AdmissionServer({
       value: 'mutated',
     });
   },
-}).servePlaintext();
+}).serve();
