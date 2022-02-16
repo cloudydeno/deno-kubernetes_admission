@@ -1,3 +1,5 @@
+import { serve, serveTls } from "https://deno.land/std@0.125.0/http/server.ts";
+
 import {
   fromMutatingWebhookConfiguration,
   fromValidatingWebhookConfiguration,
@@ -30,16 +32,20 @@ export class AdmissionServer {
     return this;
   }
 
-  registerFetchEvent() {
-    addEventListener("fetch", async (event) => {
-      const request = (event as any).request as Request;
-      const response = await this.handleRequest(request).catch(err => {
+  async servePlaintext(port = 8000) {
+    console.log(`Available @ http://localhost:${port}/`);
+    await serve(async req => {
+      const resp = await this.handleRequest(req);
+      resp.headers.set("server", `kubernetes-aws-identity-webhook/0.1.0`);
+      return resp;
+    }, {
+      port,
+      hostname: '[::]',
+      onError(err: any) {
         const msg = err.stack || err.message || JSON.stringify(err);
         console.error('!!!', msg);
         return new Response(`Internal Error!\n${msg}`, {status: 500});
-      });
-      response.headers.set("server", `kubernetes-aws-identity-webhook/0.1.0`);
-      await (event as any).respondWith(response);
+      },
     });
   }
 
