@@ -13,6 +13,20 @@ import {
 } from "./admission-context.ts";
 export { AdmissionContext };
 
+export interface DefaultWebhookConfig {
+  failurePolicy: 'Ignore' | 'Fail';
+  matchPolicy: 'Exact' | 'Equivalent';
+  sideEffects: 'Unknown' | 'None' | 'Some' | 'NoneOnDryRun';
+  reinvocationPolicy: 'Never' | 'IfNeeded';
+  name?: string;
+};
+const defaultWebhookConfigDefaults: DefaultWebhookConfig = {
+  failurePolicy: 'Fail',
+  matchPolicy: 'Exact',
+  sideEffects: 'None',
+  reinvocationPolicy: 'IfNeeded',
+};
+
 export class AdmissionServer {
   constructor(
     public metadata: {
@@ -22,6 +36,7 @@ export class AdmissionServer {
   ) {}
   mutatingRules = new Array<WebhookRule>();
   validatingRules = new Array<WebhookRule>();
+  defaultWebhookConfig: Partial<DefaultWebhookConfig> = {};
 
   withMutatingRule(rule: WebhookRule) {
     this.mutatingRules.push(rule);
@@ -29,6 +44,10 @@ export class AdmissionServer {
   }
   withValidatingRule(rule: WebhookRule) {
     this.validatingRules.push(rule);
+    return this;
+  }
+  withDefaultWebhookConfig(config: Partial<DefaultWebhookConfig>) {
+    this.defaultWebhookConfig = config;
     return this;
   }
 
@@ -117,10 +136,9 @@ export class AdmissionServer {
     };
     const baseConfig = {
       admissionReviewVersions: ['v1'],
-      failurePolicy: 'Fail',
-      matchPolicy: 'Exact',
       name: hostname,
-      sideEffects: 'None',
+      ...defaultWebhookConfigDefaults,
+      ...this.defaultWebhookConfig,
     };
 
     const blocks = new Array<string>();
@@ -130,16 +148,19 @@ export class AdmissionServer {
         webhooks: [{
           ...baseConfig,
           clientConfig: { url: `${origin}/admission/mutate` },
-          reinvocationPolicy: 'IfNeeded',
           rules: this.mutatingRules,
         }],
       }), null, 2)+`\n`);
     }
     if (this.validatingRules.length > 0) {
+      const {
+        reinvocationPolicy, // Only relevant for mutating, so pull out + ignore here
+        ...validatingConfig
+      } = baseConfig;
       blocks.push(`---\n`+JSON.stringify(fromValidatingWebhookConfiguration({
         metadata,
         webhooks: [{
-          ...baseConfig,
+          ...validatingConfig,
           clientConfig: { url: `${origin}/admission/validate` },
           rules: this.validatingRules,
         }],
